@@ -9,8 +9,7 @@ services:
       - WORKERS=1
       - PORT_APP=5000
     depends_on:
-      kafka:
-        condition: service_healthy
+      - kafka
     ports:
       - "127.0.0.1:5000:5000"
   
@@ -33,8 +32,6 @@ services:
       - KAFKA_CFG_DELETE_TOPIC_ENABLE=true
       - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
       - KAFKA_KRAFT_CLUSTER_ID=NzuVY3xIRF2x-SG4uzn4SQ
-    depends_on:
-      - kafka
     volumes:
       - kafka_data:/bitnami/kafka
   
