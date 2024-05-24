@@ -1,40 +1,54 @@
-import asyncio
+from http.client import HTTPException
 import json
-import logging
 from http import HTTPStatus
-from kafka import KafkaConsumer, KafkaProducer
-from flask import Flask, jsonify
+
+from kafka3 import KafkaConsumer, KafkaProducer
+from kafka3.admin import KafkaAdminClient, NewTopic
+from kafka3.errors import KafkaConnectionError
+from backoff import on_exception, expo
 
 from models.models import UserValues
-from config import settings
+from config import settings, logger
 
-logger = logging.getLogger(__name__)
+# TODO: backoff проверить, количество попыток вынести в env\конфиг
+# TODO: партицирование  и репликацию доделать, вынести в env\конфиг
+@on_exception(expo, (KafkaConnectionError), max_tries=5)
+def kafka_check_topic(name_topic: str):   
+    admin_client = KafkaAdminClient(
+        bootstrap_servers=[f'{settings.KAFKA_HOST}:{settings.KAFKA_PORT}'],
+        client_id='ugc'
+    )
+    server_topics = admin_client.list_topics()
+    if not name_topic in server_topics:
+        new_topic_list = []
+        new_topic_list.append(NewTopic(name=name_topic, num_partitions=1, replication_factor=1))
+        admin_client.create_topics(new_topics=new_topic_list, validate_only=False)
+    
 
-# Инициализируем цикл событий asyncio
-loop = asyncio.get_event_loop()
-
-# Создаем приложение Flask
-app = Flask(__name__)
-
-# Функция десериализации JSON для Kafka сообщений
-def kafka_json_deserializer(serialized):
-    return json.loads(serialized)
-
-# Функция для отправки сообщения в Kafka
-async def process_load_kafka(value):
-    producer = KafkaProducer(bootstrap_servers=[f'{settings.KAFKA_HOST}:{settings.KAFKA_PORT}'])
+# TODO: backoff
+@on_exception(expo, (KafkaConnectionError), max_tries=5)
+def process_load_kafka(value):
+    kafka_check_topic(settings.KAFKA_TOPIC)
+    producer = KafkaProducer(bootstrap_servers=[f'{settings.KAFKA_HOST}:{settings.KAFKA_PORT}'],
+                             client_id='ugc')
     try:
-        # Отправляем сообщение
         producer.send(settings.KAFKA_TOPIC, value=value)
     except Exception as exc:
         logger.exception(exc)
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=str(exc))
     finally:
         producer.close()
         return {}
 
-# Функция для получения сообщений из Kafka
-async def process_get_messages():
+
+def kafka_json_deserializer(serialized):
+    return json.loads(serialized)
+
+
+# для тестирования. не проверяла работу
+# в etl процесс получения данных реализован
+# TODO: backoff
+def process_get_messages():
     consumer = KafkaConsumer(
         settings.KAFKA_TOPIC,
         group_id=settings.GROUP_ID,
@@ -58,28 +72,3 @@ async def process_get_messages():
         consumer.close()
 
     return retrieved_requests
-
-# Маршрут для отправки сообщений в Kafka
-@app.route('/send', methods=['POST'])
-def send_message_to_kafka():
-    data = request.json
-    if not data:
-        return jsonify({"error": "Data is required"}), HTTPStatus.BAD_REQUEST
-
-    try:
-        asyncio.run(process_load_kafka(json.dumps(data).encode()))
-        return jsonify({"status": "Message sent to Kafka"}), HTTPStatus.OK
-    except Exception as e:
-        return jsonify({"error": str(e)}), HTTPStatus.INTERNAL_SERVER_ERROR
-
-# Маршрут для получения сообщений из Kafka
-@app.route('/receive', methods=['GET'])
-def receive_messages_from_kafka():
-    try:
-        messages = asyncio.run(process_get_messages())
-        return jsonify([message.dict() for message in messages]), HTTPStatus.OK
-    except Exception as e:
-        return jsonify({"error": str(e)}), HTTPStatus.INTERNAL_SERVER_ERROR
-
-if __name__ == '__main__':
-    app.run()
