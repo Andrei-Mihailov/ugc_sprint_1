@@ -6,3 +6,4 @@ pydantic-settings==2.2.1
 gevent==24.2.1
 gunicorn==22.0.0
 backoff==2.2.1
+requests==2.31.0

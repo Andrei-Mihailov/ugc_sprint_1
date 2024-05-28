@@ -1,12 +1,15 @@
 import logging
-from typing import Union
 
 from pydantic import Field
 from pydantic_settings import BaseSettings
-from kafka3 import KafkaProducer
 
 
 class Settings(BaseSettings):
+    # ClickHouse
+    CH_HOST: str = Field('localhost', env='CH_HOST')
+    CH_PORT: int = Field(8123, env='CH_PORT')
+    CH_USER: str = Field('localhost', env='CH_USER')
+    CH_PASSWORD: str = Field(8123, env='CH_PASSWORD')
     # Kafka
     KAFKA_TOPIC: str = Field('events', env='KAFKA_TOPIC')
     KAFKA_HOST: str = Field('localhost', env='KAFKA_HOST')
