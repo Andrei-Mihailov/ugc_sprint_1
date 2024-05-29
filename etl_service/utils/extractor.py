@@ -5,8 +5,7 @@ from backoff import on_exception, expo
 from psycopg2.extras import DictCursor
 from contextlib import contextmanager
 
-from utils.queries import (get_data_from_table,
-                           get_count_data_from_table)
+from utils.queries import get_data_from_table, get_count_data_from_table
 from configs.config import schema_to_transfer
 
 
@@ -26,7 +25,9 @@ class PostgresExtractor:
         """
         self.conn: _connection = pg_conn
 
-    @on_exception(expo, (psycopg2.DatabaseError, psycopg2.OperationalError), max_tries=5)
+    @on_exception(
+        expo, (psycopg2.DatabaseError, psycopg2.OperationalError), max_tries=5
+    )
     def get_table_size(self):
         """
         Получает размер указанной таблицы в базе данных PostgreSQL.
@@ -42,15 +43,18 @@ class PostgresExtractor:
 
         return size
 
-    @on_exception(expo, (psycopg2.DatabaseError, psycopg2.OperationalError), max_tries=5)
+    @on_exception(
+        expo, (psycopg2.DatabaseError, psycopg2.OperationalError), max_tries=5
+    )
     def extract_data(self, offset, limit):
         """
         Извлекает данные из указанной таблицы с использованием смещения и лимита.
         """
         cursor = self.conn.cursor()
 
-        query = get_data_from_table[schema_to_transfer].format(offset=offset,
-                                                               limit=limit)
+        query = get_data_from_table[schema_to_transfer].format(
+            offset=offset, limit=limit
+        )
         cursor.execute(query)
         results = cursor.fetchall()
 

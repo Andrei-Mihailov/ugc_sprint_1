@@ -102,7 +102,7 @@ def validate_password(hashed_password: bytes, password: str) -> bool:
 
 def generate_random_string():
     alphabet = string.ascii_letters + string.digits
-    return ''.join(secrets_choice(alphabet) for _ in range(16))
+    return "".join(secrets_choice(alphabet) for _ in range(16))
 
 
 def check_date_and_type_token(payload: dict, type_token_need: str) -> bool:

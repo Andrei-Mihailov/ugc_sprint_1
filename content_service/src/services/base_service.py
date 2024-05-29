@@ -44,7 +44,7 @@ class BaseService(AbstractBaseService):
         self.storage = storage
         self.model = None
         self.relation_model = None
-        self.index = ''
+        self.index = ""
 
     async def get_by_id(self, id: str) -> Union[Film, Genre, Person, None]:
         instance = await self._get_from_cache(id)
@@ -61,13 +61,14 @@ class BaseService(AbstractBaseService):
         except NotFoundError:
             return None
 
-        instance = self.model(**doc['_source'])
-        await self._put_to_cache(
-            key=id, value=instance, expire=CACHE_EXPIRE_IN_SECONDS)
+        instance = self.model(**doc["_source"])
+        await self._put_to_cache(key=id, value=instance, expire=CACHE_EXPIRE_IN_SECONDS)
         return instance
 
     @backoff.on_exception(backoff.expo, conn_err_redis, max_tries=5)
-    async def _get_from_cache(self, key: Union[dict, str]) -> Union[Film, Genre, Person, None]:
+    async def _get_from_cache(
+        self, key: Union[dict, str]
+    ) -> Union[Film, Genre, Person, None]:
         data = await self.cache.get(json.dumps(key) if isinstance(key, dict) else key)
         if not data:
             return None
@@ -82,18 +83,24 @@ class BaseService(AbstractBaseService):
 
     @backoff.on_exception(backoff.expo, conn_err_redis, max_tries=5)
     async def _put_to_cache(
-            self, key: Union[dict, str], value: Union[Film, Genre, Person, dict, list[dict]], expire: int):
-        await self.cache.set(key if isinstance(key, str) else json.dumps(key),
-                             value.json() if isinstance(value, self.model) else json.dumps(value),
-                             expire)
+        self,
+        key: Union[dict, str],
+        value: Union[Film, Genre, Person, dict, list[dict]],
+        expire: int,
+    ):
+        await self.cache.set(
+            key if isinstance(key, str) else json.dumps(key),
+            value.json() if isinstance(value, self.model) else json.dumps(value),
+            expire,
+        )
 
     @backoff.on_exception(backoff.expo, conn_err_es, max_tries=5)
     async def execute_query_storage(self, query: dict):
         result = await self.storage.search(index=self.index, body=query)
-        docs = result['hits']['hits']
+        docs = result["hits"]["hits"]
         instance_list = []
         for doc in docs:
-            instance = self.model(**doc['_source'])
+            instance = self.model(**doc["_source"])
             params = prepare_fields_for_response(self.model, instance)
             instance_list.append(params)
 
@@ -112,9 +119,9 @@ class ExecuteRelationObject(BaseService, AbstractExecuteRelation):
     @backoff.on_exception(backoff.expo, conn_err_es, max_tries=5)
     async def execute_query_storage_relation(self, query: dict):
         result = await self.storage.search(index=self.index, body=query)
-        docs = result['hits']['hits']
+        docs = result["hits"]["hits"]
         instance_list = []
-        for doc in docs[0]['_source']['films']:
+        for doc in docs[0]["_source"]["films"]:
             instance = self.relation_model(**doc)
             params = prepare_fields_for_response(self.relation_model, instance)
             instance_list.append(params)

@@ -1,7 +1,7 @@
 get_count_data_from_table = {
     "films": "SELECT count(*) FROM content.film_work",
     "genres": "SELECT count(*) FROM content.genre",
-    "persons": "SELECT count(*) FROM content.person"
+    "persons": "SELECT count(*) FROM content.person",
 }
 
 get_data_from_table = {
@@ -75,5 +75,5 @@ get_data_from_table = {
                     p.id,
                     p.full_name
                 OFFSET {offset} LIMIT {limit};
-            """
+            """,
 }

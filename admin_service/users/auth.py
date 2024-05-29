@@ -22,11 +22,8 @@ class Roles(StrEnum):
 class CustomBackend(BaseBackend):
     def authenticate(self, request, username=None, password=None):
         url = settings.AUTH_API_LOGIN_URL
-        payload = {
-            'email': username,
-            'password': password
-        }
-        headers = {'X-Request-Id': str(uuid.uuid4())}
+        payload = {"email": username, "password": password}
+        headers = {"X-Request-Id": str(uuid.uuid4())}
         try:
             response = requests.post(
                 url,
@@ -40,13 +37,17 @@ class CustomBackend(BaseBackend):
             data = AnonymousUser().__dict__
 
         try:
-            user, _ = User.objects.get_or_create(id=data.get('uuid', 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'))
-            user.email = data.get('email', 'anonym')
-            user.first_name = data.get('first_name', 'anonym')
-            user.last_name = data.get('last_name', 'anonym')
-            user.is_staff = data.get('role', None) == Roles.ADMIN or data.get('is_superuser', False)
-            user.is_superuser = data.get('is_superuser', False)
-            user.is_active = data.get('active', True)
+            user, _ = User.objects.get_or_create(
+                id=data.get("uuid", "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx")
+            )
+            user.email = data.get("email", "anonym")
+            user.first_name = data.get("first_name", "anonym")
+            user.last_name = data.get("last_name", "anonym")
+            user.is_staff = data.get("role", None) == Roles.ADMIN or data.get(
+                "is_superuser", False
+            )
+            user.is_superuser = data.get("is_superuser", False)
+            user.is_active = data.get("active", True)
             user.save()
         except Exception:
             return None

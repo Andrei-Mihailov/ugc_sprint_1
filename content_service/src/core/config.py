@@ -70,18 +70,15 @@ class PostgreSQLConfig(BaseModel):
 
 
 els_config_films_data = ElasticsearchConfig(
-    urls=f"http://{settings.elastic_host}:{settings.elastic_port}",
-    index='films'
+    urls=f"http://{settings.elastic_host}:{settings.elastic_port}", index="films"
 )
 
 els_config_genres_data = ElasticsearchConfig(
-    urls=f"http://{settings.elastic_host}:{settings.elastic_port}",
-    index='genres'
+    urls=f"http://{settings.elastic_host}:{settings.elastic_port}", index="genres"
 )
 
 els_config_persons_data = ElasticsearchConfig(
-    urls=f"http://{settings.elastic_host}:{settings.elastic_port}",
-    index='persons'
+    urls=f"http://{settings.elastic_host}:{settings.elastic_port}", index="persons"
 )
 
 pg_config_data = PostgreSQLConfig(
@@ -89,5 +86,5 @@ pg_config_data = PostgreSQLConfig(
     user=settings.db_user,
     password=settings.db_password,
     host=settings.db_host,
-    port=settings.db_port
+    port=settings.db_port,
 )
