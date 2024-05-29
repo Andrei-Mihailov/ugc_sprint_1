@@ -17,10 +17,11 @@ def kafka_json_deserializer(serialized):
 
 
 @on_exception(expo, (ConnectionError), max_tries=5)
-def init_db():   
+def init_db():
     global clickhouse_client
     clickhouse_client = Client(host="clickhouse", database='movies_analysis', user='app', password='qwe123')
-    # TODO: сделать маппинг бд и свойств
+
+    # Создание таблицы, если она не существует
     clickhouse_client.execute(
         """
         CREATE TABLE IF NOT EXISTS movies_analysis.movies_table
@@ -34,6 +35,13 @@ def init_db():
             )
             Engine=MergeTree()
         ORDER BY movie_timestamp
+        """,
+    )
+
+    # Создание индекса для улучшения производительности запросов
+    clickhouse_client.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_movies_analysis ON movies_analysis.movies_table (user_id, movie_id)
         """,
     )
 
