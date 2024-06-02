@@ -33,14 +33,14 @@ services:
     image: bitnami/kafka:3.7
     container_name: ugc-kafka
     ports:
-      - "9092:9092"
+      - "9094:9094"
     environment:
       - KAFKA_ENABLE_KRAFT=yes
       - KAFKA_CFG_PROCESS_ROLES=broker,controller
       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
-      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
-      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://127.0.0.1:9094
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT
       - KAFKA_BROKER_ID=0
       - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
       - ALLOW_PLAINTEXT_LISTENER=yes
@@ -74,11 +74,6 @@ services:
     ports:
       - "8123:8123"
       - "9000:9000"
-    #ulimits:
-      #nproc: 65535
-      #nofile:
-        #soft: 262144
-        #hard: 262144
     environment:
       - CLICKHOUSE_DB=movies_analysis
       - CLICKHOUSE_USER=app
@@ -86,9 +81,6 @@ services:
       - CLICKHOUSE_PASSWORD=qwe123
     volumes:
       - clickhouse_data:/var/lib/clickhouse/
-      # - ./etl/clickhouse/config.xml:/etc/clickhouse-server/config.d/config.xml
-      # - ./etl/clickhouse/users.xml:/etc/clickhouse-server/users.d/users.xml
-      #- ./clickhouse/init:/docker-entrypoint-initdb.d/
     healthcheck:
       test: wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1
       interval: 10s
@@ -107,4 +99,3 @@ volumes:
   kafka_data:
   clickhouse_data:
   cloudbeaver:
-

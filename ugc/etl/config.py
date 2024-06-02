@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     CH_PORT: int = Field(8123, env="CH_PORT")
     CH_USER: str = Field("localhost", env="CH_USER")
     CH_PASSWORD: str = Field(8123, env="CH_PASSWORD")
+    CH_DATABASE: str = Field("movies_analysis", env="CH_DATABASE")
     # Kafka
     KAFKA_TOPIC: str = Field("events", env="KAFKA_TOPIC")
     KAFKA_HOST: str = Field("localhost", env="KAFKA_HOST")
