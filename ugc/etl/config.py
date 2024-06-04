@@ -1,7 +1,12 @@
 import logging
+from typing import Union, Any
 
 from pydantic import Field
 from pydantic_settings import BaseSettings
+from clickhouse_driver import Client
+from kafka3 import KafkaConsumer
+from requests.exceptions import ConnectionError
+from backoff import on_exception, expo
 
 
 class Settings(BaseSettings):
@@ -17,7 +22,7 @@ class Settings(BaseSettings):
     KAFKA_PORT: int = Field(9092, env="KAFKA_PORT")
     KAFKA_GROUP: str = Field("echo-messages", env="KAFKA_GROUP")
     CONSUMER_TIMEOUT_MS: int = Field(100, env="CONSUMER_TIMEOUT_MS")
-    MAX_RECORDS_PER_CONSUMER: int = Field(100, env="MAX_RECORDS_PER_CONSUMER")
+    MAX_RECORDS_PER_BATCH: int = Field(100, env="MAX_RECORDS_PER_BATCH")
 
     class Config:
         env_file = ".env"
@@ -27,3 +32,21 @@ class Settings(BaseSettings):
 settings = Settings()
 
 logger = logging.getLogger(__name__)
+
+
+class Clickhouse():
+    def __init__(self) -> None:
+        self.clickhouse_connect: Union[Client, None]
+
+    @on_exception(expo, (ConnectionError), max_tries=5)
+    def execute_query(self, query: str, data: Union[Any, None]):
+        self.clickhouse_connect.execute(query, data)
+
+
+class Kafka():
+    def __init__(self) -> None:
+        self.kafka_connect: Union[KafkaConsumer, None]
+
+ 
+ch = Clickhouse()
+kafka = Kafka()
