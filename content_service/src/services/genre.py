@@ -18,10 +18,11 @@ class GenreService(BaseService):
 
     async def get_all_genres(self, page_number: int, page_size: int) -> list[Genre]:
         query_str = {"match_all": {}}
-        query = {"size": page_size,
-                 "from": page_size*(page_number-1),
-                 "query": query_str,
-                 }
+        query = {
+            "size": page_size,
+            "from": page_size * (page_number - 1),
+            "query": query_str,
+        }
         genres_list = await self._get_from_cache(query)
         if not genres_list:
             genres_list = await self.execute_query_storage(query)
@@ -33,8 +34,8 @@ class GenreService(BaseService):
 
 @lru_cache()
 def get_genre_service(
-        redis: RedisCache = Depends(get_redis),
-        elastic: ElasticStorage = Depends(get_elastic),
+    redis: RedisCache = Depends(get_redis),
+    elastic: ElasticStorage = Depends(get_elastic),
 ) -> GenreService:
 
     return GenreService(redis, elastic)

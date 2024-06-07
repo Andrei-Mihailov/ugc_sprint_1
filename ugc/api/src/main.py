@@ -1,66 +1,77 @@
-import logging
-from flask import Flask, jsonify, Blueprint
-from api.v1.kafka_producer import kafka_blueprint  # Предполагается, что у вас есть Blueprint в kafka_producer
-from dotenv import load_dotenv
-from pydantic import BaseSettings
-from os import getenv
-from routes.ugc import ugc_blueprint
+from flask import Flask, jsonify, request
+from kafka3.admin import KafkaAdminClient, NewTopic
+from kafka3.errors import KafkaConnectionError
+from backoff import on_exception, expo
+from flask_jwt_extended import (
+    JWTManager,
+    create_access_token,
+    jwt_required,
+    get_jwt_identity,
+)
 
-# Загрузка переменных окружения из .env файла
+from api.v1.kafka_producer import ugc_blueprint
+from config import settings
+from dotenv import load_dotenv
+import os
+
 load_dotenv()
 
-class KafkaSet(BaseSettings):
-    KAFKA_TOPIC: str = getenv('KAFKA_TOPIC', 'events')
-    KAFKA_HOST: str = getenv('KAFKA_HOST', '127.0.0.1')
-    KAFKA_PORT: int = getenv('KAFKA_PORT', 9092)
-    GROUP_ID: str = "echo-messages"
-    CONSUMER_TIMEOUT_MS: int = 100
-    MAX_RECORDS_PER_CONSUMER: int = 100
-
-    class Config:
-        case_sensitive = False
-
-settings = KafkaSet()
-
-logger = logging.getLogger(__name__)
+# TODO: openapi docs - думаю нашей схемы в качестве документации будет достаточно, если нет, то сделаю
+# TODO: синхронизацию с auth-сервисом, только авторизованные пользователи создают события +- (в процессе)
+# TODO: добавить healthcheck  в доккер компоуз к ugc+
 
 app = Flask(__name__)
-app.config['APPLICATION_ROOT'] = '/ugc'
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "your_secret_key")
+jwt = JWTManager(app)
 
-# Настройка кастомного класса ответа и других параметров, если необходимо
-class CustomJSONResponse(jsonify):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.headers['Content-Type'] = 'application/json; charset=utf-8'
+app.register_blueprint(ugc_blueprint)
 
-app.response_class = CustomJSONResponse
 
-@app.route('/api/openapi', methods=['GET'])
-def openapi_docs():
-    return jsonify({
-        "title": "UGC",
-        "description": "Асинхронный сборщик UGC",
-        "docs_url": "/api/openapi",
-        "openapi_url": "/api/openapi.json",
-    })
+# TODO: backoff проверить, количество попыток вынести в env\конфиг+
+# TODO: партицирование  и репликацию доделать, вынести в env\конфиг+
+@on_exception(expo, (KafkaConnectionError), max_tries=int(os.getenv("MAX_TRIES")))
+def init_app():
+    admin_client = KafkaAdminClient(
+        bootstrap_servers=[f"{settings.KAFKA_HOST}:{settings.KAFKA_PORT}"],
+        client_id="ugc",
+    )
+    server_topics = admin_client.list_topics()
+    if settings.KAFKA_TOPIC not in server_topics:
+        new_topic_list = [
+            NewTopic(
+                name=settings.KAFKA_TOPIC,
+                num_partitions=settings.NUM_PARTITIONS,
+                replication_factor=settings.REPLICATION_FACTOR,
+            )
+        ]
+        admin_client.create_topics(new_topics=new_topic_list, validate_only=False)
 
-# Регистрация Blueprint
-app.register_blueprint(kafka_blueprint, url_prefix='/api/v1/kafka')
+    admin_client.close()
 
-# Используем settings в вашем приложении Flask
-@app.route('/')
+
+@app.route("/")
 def index():
-    return {
-        "KAFKA_TOPIC": settings.KAFKA_TOPIC,
-        "KAFKA_HOST": settings.KAFKA_HOST,
-        "KAFKA_PORT": settings.KAFKA_PORT,
-        "GROUP_ID": settings.GROUP_ID,
-        "CONSUMER_TIMEOUT_MS": settings.CONSUMER_TIMEOUT_MS,
-        "MAX_RECORDS_PER_CONSUMER": settings.MAX_RECORDS_PER_CONSUMER,
-    }
+    return "App start"
 
-# Регистрация Blueprint
-app.register_blueprint(ugc_blueprint, url_prefix='/ugc')
 
-if __name__ == '__main__':
-    app.run()
+@app.route("/login", methods=["POST"])
+def login():
+    username = request.json.get("username", None)
+    password = request.json.get("password", None)
+    # TODO admin admin не годится
+
+    access_token = create_access_token(identity=username)
+    return jsonify(access_token=access_token), 200
+
+
+@app.route("/create_event", methods=["POST"])
+@jwt_required()
+def create_event():
+    user_id = get_jwt_identity()
+    return jsonify(message="Event created by user: " + user_id), 200
+
+
+if __name__ == "__main__":
+    init_app()
+    # TODO:  вынести в env+
+    app.run(debug=bool(os.getenv("DEBUG")))

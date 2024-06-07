@@ -35,8 +35,7 @@ settings = Settings()
 schema_to_transfer = sys.argv[1]
 
 elasticsearch_config_data = ElasticsearchConfig(
-    urls=f"http://{settings.ELASTIC_HOST}:9200",
-    index=schema_to_transfer
+    urls=f"http://{settings.ELASTIC_HOST}:9200", index=schema_to_transfer
 )
 
 postgres_config_data = PostgreSQLConfig(
@@ -44,5 +43,5 @@ postgres_config_data = PostgreSQLConfig(
     user=settings.DB_USER,
     password=settings.DB_PASSWORD,
     host=settings.DB_HOST,
-    port=5432
+    port=5432,
 )

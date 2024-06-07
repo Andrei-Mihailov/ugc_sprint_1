@@ -20,8 +20,8 @@ class AuthJWT(BaseModel):
 
 
 class YandexSettings(BaseSettings):
-    oauth_url: str = 'https://oauth.yandex.ru/'
-    login_url: str = 'https://login.yandex.ru/'
+    oauth_url: str = "https://oauth.yandex.ru/"
+    login_url: str = "https://login.yandex.ru/"
     client_id: str
     client_secret: str
 
@@ -51,7 +51,7 @@ class Settings(BaseSettings):
     pwd_context: CryptContext = CryptContext(schemes=["bcrypt"], deprecated="auto")
     oauth2_scheme: OAuth2PasswordBearer = OAuth2PasswordBearer(tokenUrl="token")
 
-    REQUEST_LIMIT_PER_MINUTE: int = os.getenv('REQUEST_LIMIT_PER_MINUTE', 20)
+    REQUEST_LIMIT_PER_MINUTE: int = os.getenv("REQUEST_LIMIT_PER_MINUTE", 20)
 
     class Config:
         env_file = ".env"

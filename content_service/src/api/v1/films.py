@@ -36,43 +36,55 @@ class FilmDetails(Film):
 
 
 # /api/v1/films/search?query=star&page_number=1&page_size=50
-@router.get('/search',
-            response_model=list[Film],
-            summary="Поиск фильмов по наименованию с пагинацией",
-            description="Полнотекстовый поиск по фильмам",
-            response_description="Ид, название, рейтинг",
-            tags=['Фильмы'])
-async def find_films(query: str,
-                     user: Annotated[dict, Depends(security_jwt)],
-                     page_number: Annotated[int, Query(
-                         description='Номер страницы', ge=1)] = 1,
-                     page_size: Annotated[int, Query(
-                         description='Количество результатов запроса на странице', ge=1, le=page_max_size)] = page_max_size,
-                     film_service: FilmService = Depends(get_film_service)) -> list[Film]:
+@router.get(
+    "/search",
+    response_model=list[Film],
+    summary="Поиск фильмов по наименованию с пагинацией",
+    description="Полнотекстовый поиск по фильмам",
+    response_description="Ид, название, рейтинг",
+    tags=["Фильмы"],
+)
+async def find_films(
+    query: str,
+    user: Annotated[dict, Depends(security_jwt)],
+    page_number: Annotated[int, Query(description="Номер страницы", ge=1)] = 1,
+    page_size: Annotated[
+        int,
+        Query(
+            description="Количество результатов запроса на странице",
+            ge=1,
+            le=page_max_size,
+        ),
+    ] = page_max_size,
+    film_service: FilmService = Depends(get_film_service),
+) -> list[Film]:
 
     films = await film_service.find_films_by_title(query, page_number, page_size)
     if not films:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND,
-                            detail='list of films is finished')
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="list of films is finished"
+        )
 
     films_response = TypeAdapter(list[Film]).validate_python(films)
     return films_response
 
 
 # /api/v1/films/<uuid:UUID>/
-@router.get('/{film_id}',
-            response_model=FilmDetails,
-            summary="Поиск фильма по ид",
-            description="Поиск по ид",
-            response_description="Ид, название, рейтинг, описание, жанры, актеры, режиссеры, сценаристы",
-            tags=['Фильмы'])
-async def film_details(film_id: str,
-                       film_service: FilmService = Depends(get_film_service)) -> FilmDetails:
+@router.get(
+    "/{film_id}",
+    response_model=FilmDetails,
+    summary="Поиск фильма по ид",
+    description="Поиск по ид",
+    response_description="Ид, название, рейтинг, описание, жанры, актеры, режиссеры, сценаристы",
+    tags=["Фильмы"],
+)
+async def film_details(
+    film_id: str, film_service: FilmService = Depends(get_film_service)
+) -> FilmDetails:
     film = await film_service.get_by_id(film_id)
 
     if not film:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND,
-                            detail='film not found')
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="film not found")
 
     actors_api = []
     for p in film.actors:
@@ -90,38 +102,49 @@ async def film_details(film_id: str,
     for p in film.genres:
         genres_api.append(Genre(id=p.id, name=p.name))
 
-    return FilmDetails(uuid=film.id,
-                       title=film.title,
-                       imdb_rating=film.imdb_rating,
-                       description=film.description,
-                       genres=genres_api,
-                       actors=actors_api,
-                       writers=writers_api,
-                       directors=directors_api
-                       )
+    return FilmDetails(
+        uuid=film.id,
+        title=film.title,
+        imdb_rating=film.imdb_rating,
+        description=film.description,
+        genres=genres_api,
+        actors=actors_api,
+        writers=writers_api,
+        directors=directors_api,
+    )
 
 
 # /api/v1/films?sort=-imdb_rating&page_size=50&page_number=1
 # /api/v1/films?genre=<uuid:UUID>&sort=-imdb_rating&page_size=50&page_number=1
-@router.get('/',
-            response_model=list[Film],
-            summary="Поиск фильмов по жанру с пагинацией",
-            description="Полнотекстовый поиск по жанру фильмов",
-            response_description="Ид, название, рейтинг",
-            tags=['Фильмы'])
-async def all_films(user: Annotated[dict, Depends(security_jwt)],
-                    page_number: Annotated[int, Query(description='Номер страницы', ge=1)] = 1,
-                    page_size: Annotated[int, Query(
-                        description='Количество результатов запроса на странице', ge=1, le=page_max_size)] = page_max_size,
-                    genre: Union[str, None] = None,
-                    sort='imdb_rating',
-                    film_service: FilmService = Depends(get_film_service),
-                    ) -> list[Film]:
+@router.get(
+    "/",
+    response_model=list[Film],
+    summary="Поиск фильмов по жанру с пагинацией",
+    description="Полнотекстовый поиск по жанру фильмов",
+    response_description="Ид, название, рейтинг",
+    tags=["Фильмы"],
+)
+async def all_films(
+    user: Annotated[dict, Depends(security_jwt)],
+    page_number: Annotated[int, Query(description="Номер страницы", ge=1)] = 1,
+    page_size: Annotated[
+        int,
+        Query(
+            description="Количество результатов запроса на странице",
+            ge=1,
+            le=page_max_size,
+        ),
+    ] = page_max_size,
+    genre: Union[str, None] = None,
+    sort="imdb_rating",
+    film_service: FilmService = Depends(get_film_service),
+) -> list[Film]:
 
     films = await film_service.get_all_films(sort, page_number, page_size, genre)
     if not films:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND,
-                            detail='list of films is finished')
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="list of films is finished"
+        )
 
     films_response = TypeAdapter(list[Film]).validate_python(films)
     return films_response

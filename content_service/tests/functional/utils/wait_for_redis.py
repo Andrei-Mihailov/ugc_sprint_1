@@ -11,10 +11,11 @@ import settings
 
 @backoff.on_exception(backoff.expo, conn_err_redis, max_tries=5)
 def connect_to_redis():
-    redis_client = Redis(host=settings.test_settings.redis_host,
-                         port=settings.test_settings.redis_port)
+    redis_client = Redis(
+        host=settings.test_settings.redis_host, port=settings.test_settings.redis_port
+    )
     redis_client.info()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     connect_to_redis()

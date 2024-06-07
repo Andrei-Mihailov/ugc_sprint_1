@@ -44,25 +44,32 @@ class JWTBearer(HTTPBearer):
     async def __call__(self, request: Request) -> dict:
         credentials: HTTPAuthorizationCredentials = await super().__call__(request)
         if not credentials:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Invalid authorization code.')
-        if not credentials.scheme == 'Bearer':
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                                detail='Only Bearer token might be accepted')
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Invalid authorization code.",
+            )
+        if not credentials.scheme == "Bearer":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Only Bearer token might be accepted",
+            )
         decoded_token = self.parse_token(credentials.credentials)
         if not decoded_token:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Invalid or expired token.')
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Invalid or expired token.",
+            )
 
         if self.check_user:
             # проверить usera в бд
             response = await self.check(
-                'http://127.0.0.1:8080/api/v1/users/me',
+                "http://127.0.0.1:8080/api/v1/users/me",
                 params={},
-                headers={'Authorization': f'Bearer {credentials.credentials}'}
+                headers={"Authorization": f"Bearer {credentials.credentials}"},
             )
             if response.status != status.HTTP_202_ACCEPTED:
                 raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="User doesn't exist"
+                    status_code=status.HTTP_403_FORBIDDEN, detail="User doesn't exist"
                 )
 
         return decoded_token

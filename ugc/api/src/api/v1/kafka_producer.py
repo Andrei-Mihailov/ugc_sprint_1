@@ -1,51 +1,34 @@
-from flask import Blueprint, request, jsonify
 import json
 from datetime import datetime
-from typing import List
-from service.kafka_setter import process_get_messages, process_load_kafka
-from models.models import Event, UserValues
+from http import HTTPStatus
 
-# Создаем Blueprint для маршрутов связанных с UGC
-ugc_blueprint = Blueprint('ugc', __name__)
+from flask import Blueprint, request, jsonify
+
+from service.kafka_setter import process_load_kafka
+from config import logger
+from utils.auth import security_jwt_check
 
 
-@ugc_blueprint.route('/ugc-producer', methods=['POST'])
-def kafka_load():
-    """
-    Производит тестовые UGC сообщения в Kafka.
-    """
-    # Получаем данные из запроса
-    data = request.json
+ugc_blueprint = Blueprint("ugc", __name__, url_prefix="/ugc")
+
+
+# путь до ручки :5000/ugc/send-to-broker/movie_events?movie_id=1&user_id=12&user_fio=Ivanov_Ivan_Ivanovich&movie_name=Interstellar&fully_viewed=True
+@ugc_blueprint.route("/send-to-broker/<type_event>",
+                     methods=["GET", "POST"])
+def send_message_to_kafka(type_event: str):
+
+    user = security_jwt_check(request)
+    if not user:
+        return jsonify({"error": "Unauthorized"}), HTTPStatus.UNAUTHORIZED
+    data = request.args.to_dict()
     if not data:
-        return jsonify({"error": "Data is required"}), 400
+        return jsonify({"error": "Data is required"}), HTTPStatus.BAD_REQUEST
 
-    # Преобразуем данные в объект Event
-    event = Event(**data)
-    event_dict = event.dict()
-
-    # Добавляем текущую дату и время
-    event_dict['date_time'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    my_info = json.dumps(event_dict).encode()
+    data["date_event"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     try:
-        # Отправляем данные в Kafka
-        result = process_load_kafka(value=my_info)
-        return '', 204
+        process_load_kafka(key=type_event.encode(), value=json.dumps(data).encode())
+        return jsonify({"status": "Message sent to Kafka"}), HTTPStatus.OK
     except Exception as e:
-        # В случае ошибки отправляем HTTP 500 и сообщение об ошибке
-        return jsonify({"error": str(e)}), 500
-
-
-@ugc_blueprint.route('/ugc-consumer', methods=['GET'])
-def get_messages_from_kafka():
-    """
-    Получает список сообщений из Kafka.
-    """
-    try:
-        # Получаем сообщения из Kafka
-        messages = process_get_messages()
-        # Возвращаем сообщения в виде списка JSON объектов и HTTP 200
-        return jsonify([message.dict() for message in messages]), 200
-    except Exception as e:
-        # В случае ошибки отправляем HTTP 500 и сообщение об ошибке
-        return jsonify({"error": str(e)}), 500
+        logger.exception(e)
+        return jsonify({"status": "Error occurred"}), HTTPStatus.INTERNAL_SERVER_ERROR

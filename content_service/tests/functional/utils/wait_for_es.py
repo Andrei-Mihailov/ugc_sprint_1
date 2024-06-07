@@ -11,12 +11,14 @@ import settings
 
 @backoff.on_exception(backoff.expo, conn_err_es, max_time=60)
 def connect_to_elastic():
-    es_client = Elasticsearch(hosts=settings.test_settings.es_host,
-                              validate_cert=False,
-                              use_ssl=False,
-                              request_timeout=1)
+    es_client = Elasticsearch(
+        hosts=settings.test_settings.es_host,
+        validate_cert=False,
+        use_ssl=False,
+        request_timeout=1,
+    )
     es_client.info()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     connect_to_elastic()

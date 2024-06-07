@@ -7,7 +7,11 @@ from dotenv import load_dotenv
 
 from utils.extractor import PostgresExtractor, psycopg2_context
 from utils.saver import ElasticsearchSaver
-from configs.config import postgres_config_data, elasticsearch_config_data, schema_to_transfer
+from configs.config import (
+    postgres_config_data,
+    elasticsearch_config_data,
+    schema_to_transfer,
+)
 
 
 class DataMigrator:
@@ -44,10 +48,8 @@ class DataMigrator:
             next_offset = offset
             while next_offset < table_size:
                 logging.info(f"Миграция данных со смещением {next_offset}")
-                limit = min(table_size - next_offset,
-                            self.saver.batch_size)
-                results = self.extractor.extract_data(
-                    next_offset, limit)
+                limit = min(table_size - next_offset, self.saver.batch_size)
+                results = self.extractor.extract_data(next_offset, limit)
                 if not results:
                     break
 
@@ -59,14 +61,13 @@ class DataMigrator:
 
             offset = 0
         except Exception as e:
-            logging.error(
-                f"Ошибка миграции данных: {str(e)}")
+            logging.error(f"Ошибка миграции данных: {str(e)}")
             self.saver.es.close()  # закрываем соединение в случае исключений
             logging.info("Повторная попытка через 60 секунд...")
             time.sleep(60)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     load_dotenv()
     while True:

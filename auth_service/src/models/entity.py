@@ -2,7 +2,15 @@
 import uuid
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import Boolean, DateTime, String, ForeignKey, or_, Text, UniqueConstraint
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    String,
+    ForeignKey,
+    or_,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import string
@@ -39,19 +47,19 @@ class Permissions(Base):
 
 
 class SocialAccount(Base):
-    __tablename__ = 'social_account'
+    __tablename__ = "social_account"
 
     id = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = mapped_column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=True)
-    user = relationship("User", back_populates='social_accounts')
+    user_id = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    user = relationship("User", back_populates="social_accounts")
 
     social_id = mapped_column(Text, nullable=False)
     social_name = mapped_column(Text, nullable=False)
 
-    __table_args__ = (UniqueConstraint('social_id', 'social_name', name='social_pk'), )
+    __table_args__ = (UniqueConstraint("social_id", "social_name", name="social_pk"),)
 
     def __repr__(self):
-        return f'<SocialAccount {self.social_name}:{self.user_id}>'
+        return f"<SocialAccount {self.social_name}:{self.user_id}>"
 
 
 class User(Base):
@@ -70,17 +78,14 @@ class User(Base):
     last_name: Mapped[str] = mapped_column(String(50), default=None, nullable=True)
     created_at: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     active: Mapped[Boolean] = mapped_column(Boolean, default=True)
-    role_id: Mapped[UUID] = mapped_column(ForeignKey("roles.id",
-                                                     ondelete="CASCADE"),
-                                          default=None,
-                                          nullable=True
-                                          )
-    role: Mapped[Roles] = relationship("Roles",
-                                       back_populates="users")
+    role_id: Mapped[UUID] = mapped_column(
+        ForeignKey("roles.id", ondelete="CASCADE"), default=None, nullable=True
+    )
+    role: Mapped[Roles] = relationship("Roles", back_populates="users")
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False)
-    social_accounts: Mapped[list["SocialAccount"]] = relationship("SocialAccount",
-                                                                  back_populates="user",
-                                                                  foreign_keys="[SocialAccount.user_id]")
+    social_accounts: Mapped[list["SocialAccount"]] = relationship(
+        "SocialAccount", back_populates="user", foreign_keys="[SocialAccount.user_id]"
+    )
 
     def __init__(
         self,
@@ -100,12 +105,14 @@ class User(Base):
         return validate_password(self.password, password)
 
     @classmethod
-    def get_user_by_universal_login(self, login: Optional[str] = None, email: Optional[str] = None):
+    def get_user_by_universal_login(
+        self, login: Optional[str] = None, email: Optional[str] = None
+    ):
         return self.query.filter(or_(self.login == login, self.email == email)).first()
 
     def generate_random_string():
         alphabet = string.ascii_letters + string.digits
-        return ''.join(secrets_choice(alphabet) for _ in range(16))
+        return "".join(secrets_choice(alphabet) for _ in range(16))
 
     def __repr__(self) -> str:
         return f"<User {self.email}>"
