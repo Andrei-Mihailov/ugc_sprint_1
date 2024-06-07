@@ -13,7 +13,8 @@ ugc_blueprint = Blueprint("ugc", __name__, url_prefix="/ugc")
 
 
 # путь до ручки :5000/ugc/send-to-broker/movie_events?movie_id=1&user_id=12&user_fio=Ivanov_Ivan_Ivanovich&movie_name=Interstellar&fully_viewed=True
-@ugc_blueprint.route("/send-to-broker/<type_event>", methods=["GET", "POST"])
+@ugc_blueprint.route("/send-to-broker/<type_event>",
+                     methods=["GET", "POST"])
 def send_message_to_kafka(type_event: str):
 
     user = security_jwt_check(request)
