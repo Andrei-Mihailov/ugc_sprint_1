@@ -1,91 +1,68 @@
-import requests
 import jwt
 import aiohttp
+import asyncio
 
-from werkzeug.exceptions import Unauthorized, Forbidden
-from fastapi import status, HTTPException, Request
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from typing import Optional
+from flask import request
+from flask_jwt_extended import jwt_required, decode_token
+from werkzeug.exceptions import HTTPException
 
-from api.src.core.config import settings
+from src.config import settings
 
 
-def decode_jwt(
-    jwt_token: str,
-    private_key: str = settings.auth_jwt.secret_key,
-    algorithm: str = settings.auth_jwt.algorithm,
-):
+def decode_jwt(jwt_token: str,
+               private_key: str = 'your-secret-key',
+               algorithm: str = 'HS256'):
     try:
-        decoded = jwt.decode(jwt_token, private_key, algorithms=[algorithm])
-    except jwt.DecodeError:
-        raise Unauthorized(description="Недействительные учетные данные для аутентификации")
-    except jwt.InvalidAlgorithmError:
-        raise Unauthorized(description="Недействительный алгоритм токена")
-    except jwt.InvalidSignatureError:
-        raise Unauthorized(description="Недействительная подпись токена")
-    except jwt.ExpiredSignatureError:
-        raise Unauthorized(description="Срок действия токена истек, обновите токен")
-    return decoded
+        return decode_token(jwt_token)
+    except jwt.exceptions.DecodeError:
+        raise HTTPException(description='Invalid authentication credentials', code=401)
+    except jwt.exceptions.InvalidAlgorithmError:
+        raise HTTPException(description='Invalid token algorithm', code=401)
+    except jwt.exceptions.InvalidSignatureError:
+        raise HTTPException(description='Invalid token signature', code=401)
+    except jwt.exceptions.ExpiredSignatureError:
+        raise HTTPException(description='Token has expired, refresh token', code=401)
 
 
-def parse_token(jwt_token: str) -> dict:
-    return decode_jwt(jwt_token)
-
-
-def check_user(headers: dict) -> bool:
-    response = requests.get("http://127.0.0.1:8080/api/v1/users/me", headers=headers)
-    if response.status_code != 202:
-        raise Forbidden(description="Пользователь не существует")
-    return True
-
-
-class JWTBearer(HTTPBearer):
+class JWTBearer:
     def __init__(self, check_user: bool = False, auto_error: bool = True):
-        super().__init__(auto_error=auto_error)
         self.check_user = check_user
+        self.auto_error = auto_error
 
-    async def __call__(self, request: Request) -> dict:
-        credentials: HTTPAuthorizationCredentials = await super().__call__(request)
-        if not credentials:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Invalid authorization code.",
-            )
-        if not credentials.scheme == "Bearer":
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Only Bearer token might be accepted",
-            )
-        decoded_token = self.parse_token(credentials.credentials)
-        if not decoded_token:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Invalid or expired token.",
-            )
+    def __call__(self, f):
+        @jwt_required()
+        def wrapper(*args, **kwargs):
+            credentials = request.headers.get('Authorization')
+            if not credentials:
+                raise HTTPException(description='Invalid authorization code.', code=403)
+            if not credentials.startswith('Bearer '):
+                raise HTTPException(description='Only Bearer token might be accepted', code=401)
+            token = credentials.split()[1]
+            decoded_token = self.parse_token(token)
+            if not decoded_token:
+                raise HTTPException(description='Invalid or expired token.', code=403)
 
-        if self.check_user:
-            # проверить usera в бд
-            response = await self.check(
-                "http://127.0.0.1:8080/api/v1/users/me",
-                params={},
-                headers={"Authorization": f"Bearer {credentials.credentials}"},
-            )
-            if response.status != status.HTTP_202_ACCEPTED:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN, detail="User doesn't exist"
-                )
+            if self.check_user:
+                loop = asyncio.get_event_loop()
+                response = loop.run_until_complete(self.check(
+                    settings.AUTH_API_ME_URL, headers={'Authorization': f'Bearer {token}'}))
+                if response.status != 202:
+                    raise HTTPException(description='User doesn\'t exist', code=403)
 
-        return decoded_token
+            return f(*args, **kwargs)
+        return wrapper
 
-    @staticmethod
-    def parse_token(jwt_token: str) -> Optional[dict]:
-        return decode_jwt(jwt_token=jwt_token)
+    def parse_token(self, jwt_token: str) -> dict:
+        try:
+            return decode_jwt(jwt_token)
+        except Exception:
+            return {}
 
     @staticmethod
     async def check(query: str, params: dict = {}, headers: dict = {}, json: dict = {}):
         async with aiohttp.ClientSession(headers=headers) as client:
             response = await client.get(query, json=json, params=params)
-        return response
+            return response
 
 
 security_jwt = JWTBearer()

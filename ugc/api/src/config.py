@@ -1,9 +1,9 @@
 import logging
-from typing import Union
 
 from pydantic import Field
 from pydantic_settings import BaseSettings
-from kafka3 import KafkaProducer, KafkaAdminClient, NewTopic
+from kafka3 import KafkaProducer
+from kafka3.admin import KafkaAdminClient, NewTopic
 from kafka.errors import TopicAlreadyExistsError
 
 
@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     MAX_RECORDS_PER_CONSUMER: int = Field(100, env="MAX_RECORDS_PER_CONSUMER")
     NUM_PARTITIONS: int = Field(1, env="NUM_PARTITIONS")
     REPLICATION_FACTOR: int = Field(1, env="REPLICATION_FACTOR")
+
+    AUTH_API_ME_URL: str
 
     class Config:
         env_file = ".env"
