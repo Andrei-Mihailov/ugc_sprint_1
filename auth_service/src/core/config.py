@@ -20,10 +20,10 @@ class AuthJWT(BaseModel):
 
 
 class YandexSettings(BaseSettings):
-    oauth_url: str = "https://oauth.yandex.ru/"
-    login_url: str = "https://login.yandex.ru/"
-    client_id: str
-    client_secret: str
+    oauth_url: str = 'https://oauth.yandex.ru/'
+    login_url: str = 'https://login.yandex.ru/'
+    client_id: str = "test"
+    client_secret: str = "test"
 
     class Config:
         env_file = "providers.env"
@@ -51,7 +51,12 @@ class Settings(BaseSettings):
     pwd_context: CryptContext = CryptContext(schemes=["bcrypt"], deprecated="auto")
     oauth2_scheme: OAuth2PasswordBearer = OAuth2PasswordBearer(tokenUrl="token")
 
-    REQUEST_LIMIT_PER_MINUTE: int = os.getenv("REQUEST_LIMIT_PER_MINUTE", 20)
+    REQUEST_LIMIT_PER_MINUTE: int = os.getenv('REQUEST_LIMIT_PER_MINUTE', 20)
+
+    # Настройка трассировки
+    tracer_host: str
+    tracer_port: int
+    enable_tracer: bool
 
     class Config:
         env_file = ".env"

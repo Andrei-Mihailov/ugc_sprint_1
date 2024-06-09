@@ -44,7 +44,8 @@ services:
     build:
       context: .
       dockerfile: ./auth_service/auth.Dockerfile
-    command: sh -c "alembic upgrade head && python3 src/main.py"
+    # command: sh -c "alembic upgrade head && python3 src/main.py"
+    command: sh -c "python3 src/main.py"
     container_name: auth_service
     expose:
       - "8000"
@@ -170,32 +171,37 @@ services:
   ugc-api:
     build:
       context: .
-      dockerfile: ./ugc/Dockerfile-ugc-api
-    container_name: ugc-api
+      dockerfile: ./ugc/ugc-api.Dockerfile
+    container_name: ugc-service-api
     environment:
       - WORKERS=1
       - PORT_APP=5000
     depends_on:
       - kafka
+      - auth_service
     # ports:
     #   - "5000:5000"
     expose:
       - "5000"
+    env_file:
+      - ./ugc/api/src/.env
   
   ugc-etl:
     build:
       context: .
-      dockerfile: ./ugc/Dockerfile-ugc-etl
-    container_name: ugc-etl
+      dockerfile: ./ugc/ugc-etl.Dockerfile
+    container_name: ugc-service-etl
     depends_on:
       kafka: 
         condition: service_started
       clickhouse:
         condition: service_healthy
+    env_file:
+      - ./ugc/etl/.env
   
   kafka:
     image: bitnami/kafka:3.7
-    container_name: ugc-kafka
+    container_name: kafka
     ports:
       - "9094:9094"
     environment:
@@ -223,7 +229,7 @@ services:
   
   kafka-ui:
     image: provectuslabs/kafka-ui:v0.7.2
-    container_name: ugc-kafka-ui
+    container_name: kafka-ui
     ports:
       - "8800:8080"
     depends_on:
@@ -234,7 +240,7 @@ services:
   
   clickhouse:
     image: clickhouse/clickhouse-server:23.8
-    container_name: ugc-clickhouse
+    container_name: clickhouse
     ports:
       - "8123:8123"
       - "9000:9000"
@@ -253,7 +259,7 @@ services:
 
   cloudbeaver:
     image: dbeaver/cloudbeaver:24.0.5
-    container_name: dbeaver
+    container_name: services-dbeaver
     ports:
       - '8978:8978'
     volumes: 
@@ -273,6 +279,8 @@ services:
       content_service:
         condition: service_started
       admin_service:
+        condition: service_started
+      ugc-api:
         condition: service_started
     ports:
       - "${SERVICE_PORT}:80"

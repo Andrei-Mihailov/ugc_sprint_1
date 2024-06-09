@@ -85,7 +85,7 @@ def load_data_to_clickhouse(batch):
             raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=str(e))  
 
 
-@on_exception(expo, (KafkaConnectionError, NoBrokersAvailable), max_tries=5)
+@on_exception(expo, (KafkaConnectionError, NoBrokersAvailable), max_tries=settings.MAX_TRIES)
 def etl():
     batch = []
     for message in kafka.kafka_connect:
@@ -100,7 +100,7 @@ def etl():
                 batch = []
 
 
-@on_exception(expo, (KafkaConnectionError, NoBrokersAvailable, ConnectionError), max_tries=5)
+@on_exception(expo, (KafkaConnectionError, NoBrokersAvailable, ConnectionError), max_tries=settings.MAX_TRIES)
 def get_connections():
     ch.clickhouse_connect = Client(
                                     host=settings.CH_HOST,

@@ -4,14 +4,14 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-COPY ./api/requirements.txt requirements.txt
+COPY ./ugc/api/requirements.txt requirements.txt
 
 RUN apt-get update && apt-get -y install curl
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY ./api/src .
+COPY ./ugc/api/src .
 
-COPY ./api/support/wait-services.sh .
+COPY ./ugc/api/support/wait-services.sh .
 RUN chmod +x wait-services.sh
 
 CMD gunicorn --worker-class gevent \

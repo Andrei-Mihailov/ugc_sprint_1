@@ -5,7 +5,6 @@ Revises: 1875654d2248
 Create Date: 2024-05-09 04:02:53.929966
 
 """
-
 from typing import Sequence, Union
 
 from alembic import op
@@ -14,8 +13,8 @@ from db.postgres_db import Base
 
 
 # revision identifiers, used by Alembic.
-revision: str = "9a5e9857fc94"
-down_revision: Union[str, None] = "1875654d2248"
+revision: str = '9a5e9857fc94'
+down_revision: Union[str, None] = '1875654d2248'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

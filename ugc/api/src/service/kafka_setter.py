@@ -1,5 +1,4 @@
 from http.client import HTTPException
-import json
 from http import HTTPStatus
 
 from kafka3 import KafkaProducer
@@ -9,7 +8,6 @@ from backoff import on_exception, expo
 from config import settings, logger
 
 
-# TODO: backoff
 @on_exception(expo, (KafkaConnectionError), max_tries=5)
 def process_load_kafka(key, value):
     producer = KafkaProducer(

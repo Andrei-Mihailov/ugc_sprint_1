@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     KAFKA_GROUP: str = Field("echo-messages", env="KAFKA_GROUP")
     CONSUMER_TIMEOUT_MS: int = Field(100, env="CONSUMER_TIMEOUT_MS")
     MAX_RECORDS_PER_BATCH: int = Field(100, env="MAX_RECORDS_PER_BATCH")
+    MAX_TRIES: int = Field(10, env="MAX_TRIES")
 
     class Config:
         env_file = ".env"

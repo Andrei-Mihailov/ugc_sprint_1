@@ -81,7 +81,9 @@ class UserService(BaseService):
         return await self.generate_and_save_tokens(user), user
 
     async def login_by_yandex(
-        self, code: int, yandex_provider: YandexOAuthService
+        self,
+        code: int,
+        yandex_provider: YandexOAuthService
     ) -> Tokens:
         social_account, user_params = await yandex_provider.register(code)
 
@@ -106,7 +108,9 @@ class UserService(BaseService):
         return True
 
     async def refresh_access_token(
-        self, access_token: str, refresh_token: str
+        self,
+        access_token: str,
+        refresh_token: str
     ) -> Tokens:
         # Декодирование refresh-токена
         payload = self.token_decode(refresh_token)
@@ -135,7 +139,8 @@ class UserService(BaseService):
                 )
 
     async def check_permissions(
-        self, access_token: str, required_permissions: str
+        self, access_token: str,
+        required_permissions: str
     ) -> bool:
         """Проверка прав доступа у пользователя."""
         payload = self.token_decode(access_token)
@@ -157,7 +162,10 @@ class UserService(BaseService):
         except AttributeError:
             return False
 
-    async def get_current_user(self, access_token: str) -> User:
+    async def get_current_user(
+        self,
+        access_token: str
+    ) -> User:
         payload = self.token_decode(access_token)
         user_uuid = payload.get("sub")
         user: User = await self.get_instance_by_id(user_uuid)

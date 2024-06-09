@@ -33,23 +33,23 @@ async def lifespan(app: FastAPI):
 
 def configure_tracer() -> None:
     trace.set_tracer_provider(
-        TracerProvider(resource=Resource.create({SERVICE_NAME: "Auth-service"}))
+        TracerProvider(
+            resource=Resource.create({SERVICE_NAME: "Auth-service"})
+        )
     )
     trace.get_tracer_provider().add_span_processor(
         BatchSpanProcessor(
             JaegerExporter(
-                agent_host_name="jaeger",
-                agent_port=6831,
+                agent_host_name=settings.tracer_host,
+                agent_port=settings.tracer_port,
             )
         )
     )
     # Чтобы видеть трейсы в консоли
-    trace.get_tracer_provider().add_span_processor(
-        BatchSpanProcessor(ConsoleSpanExporter())
-    )
+    trace.get_tracer_provider().add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
 
-
-configure_tracer()
+if settings.enable_tracer:
+    configure_tracer()
 
 
 app = FastAPI(
@@ -62,29 +62,27 @@ app = FastAPI(
 )
 
 
-@app.middleware("http")
+@app.middleware('http')
 async def before_request(request: Request, call_next):
-    user_id = request.headers.get("X-Forwarded-For")
-    request_id = request.headers.get("X-Request-Id")
+    user_id = request.headers.get('X-Forwarded-For')
+    request_id = request.headers.get('X-Request-Id')
     result = await check_limit(user_id=user_id)
     if result:
         return ORJSONResponse(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            content={"detail": "Too many requests"},
+            content={'detail': 'Too many requests'}
         )
     response = await call_next(request)
     if not request_id:
-        return ORJSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content={"detail": "X-Request-Id is required"},
-        )
-
-    tracer = trace.get_tracer(__name__)
-    with tracer.start_as_current_span(
-        "http", attributes={"http.request_id": request_id}
-    ):
+        return ORJSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={'detail': 'X-Request-Id is required'})
+    
+    if settings.enable_tracer:
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span('http', attributes={'http.request_id': request_id}):
+            response = await call_next(request=request)
+    else:
         response = await call_next(request=request)
-
+        
     return response
 
 
@@ -112,18 +110,14 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
         return self.application
 
 
+
 app.include_router(users.router, prefix="/auth/api/v1/users")
-app.include_router(
-    roles.router, prefix="/auth/api/v1/roles", dependencies=[Depends(check_jwt)]
-)
-app.include_router(
-    permissions.router,
-    prefix="/auth/api/v1/permissions",
-    dependencies=[Depends(check_jwt)],
-)
+app.include_router(roles.router, prefix="/auth/api/v1/roles", dependencies=[Depends(check_jwt)])
+app.include_router(permissions.router, prefix="/auth/api/v1/permissions", dependencies=[Depends(check_jwt)])
 app.include_router(oauth.router, prefix="/auth/api/v1/oauth")
 
 FastAPIInstrumentor.instrument_app(app)
+
 
 
 def async_cmd(func):

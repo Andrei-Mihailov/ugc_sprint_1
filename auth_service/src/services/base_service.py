@@ -48,8 +48,8 @@ class BaseService(AbstractBaseService):
     async def get_instance_data(self, instance_id: str, social_name: str):
         try:
             stmt = select(self.model).where(
-                (self.model.social_id == instance_id)
-                & (self.model.social_name == social_name)
+                (self.model.social_id == instance_id) &
+                (self.model.social_name == social_name)
             )
             result = await self.storage.execute(stmt)
             instance = result.scalars().first()

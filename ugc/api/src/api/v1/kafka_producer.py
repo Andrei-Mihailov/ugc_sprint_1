@@ -16,7 +16,6 @@ ugc_blueprint = Blueprint("ugc", __name__, url_prefix="/ugc")
 @ugc_blueprint.route("/send-to-broker/<type_event>",
                      methods=["GET", "POST"])
 def send_message_to_kafka(type_event: str):
-
     user = security_jwt_check(request)
     if not user:
         return jsonify({"error": "Unauthorized"}), HTTPStatus.UNAUTHORIZED

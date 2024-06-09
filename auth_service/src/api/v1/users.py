@@ -1,13 +1,5 @@
 from typing import Annotated
-from fastapi import (
-    APIRouter,
-    Depends,
-    status,
-    HTTPException,
-    Security,
-    Request,
-    Response,
-)
+from fastapi import APIRouter, Depends, status, HTTPException, Security, Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
@@ -33,12 +25,10 @@ router = APIRouter()
     response_model=UserSchema,
     status_code=status.HTTP_202_ACCEPTED,
     summary="Кто я",
-    tags=["Пользователь"],
+    tags=['Пользователь']
 )
-async def read_users_me(
-    credentials: HTTPAuthorizationCredentials = Security(HTTPBearer()),
-    user_service: UserService = Depends(get_user_service),
-):
+async def read_users_me(credentials: HTTPAuthorizationCredentials = Security(HTTPBearer()),
+                        user_service: UserService = Depends(get_user_service)):
     user = await user_service.get_current_user(credentials.credentials)
     return UserSchema(
         uuid=str(user.id),
@@ -46,7 +36,7 @@ async def read_users_me(
         first_name=user.first_name,
         last_name=user.last_name,
         is_superuser=user.is_superuser,
-        role=user.role,
+        role=user.role
     )
 
 
@@ -77,7 +67,7 @@ async def login(
         first_name=user.first_name,
         last_name=user.last_name,
         is_superuser=user.is_superuser,
-        role=user.role,
+        role=user.role
     )
     response = JSONResponse(content=user_schema.model_dump())
     response.set_cookie("access_token", tokens_resp.access_token)
@@ -107,7 +97,7 @@ async def user_registration(
             first_name=user.first_name,
             last_name=user.last_name,
             role=user.role,
-            is_superuser=user.is_superuser,
+            is_superuser=user.is_superuser
         )
     else:
         raise HTTPException(
@@ -124,12 +114,12 @@ async def user_registration(
     description="Редактирование логина, имени и пароля пользователя",
     response_description="Ид, логин, имя, дата регистрации",
     tags=["Пользователи"],
-    dependencies=[Depends(check_jwt)],
+    dependencies=[Depends(check_jwt)]
 )
 async def change_user_info(
     request: Request,
     user_params: Annotated[UserEditParams, Depends()],
-    user_service: UserService = Depends(get_user_service),
+    user_service: UserService = Depends(get_user_service)
 ) -> UserSchema:
     tokens = get_tokens_from_cookie(request)
     change_user = await user_service.change_user_info(tokens.access_token, user_params)
@@ -139,7 +129,7 @@ async def change_user_info(
         first_name=change_user.first_name,
         last_name=change_user.last_name,
         role=change_user.role,
-        is_superuser=change_user.is_superuser,
+        is_superuser=change_user.is_superuser
     )
 
 
@@ -151,7 +141,7 @@ async def change_user_info(
     summary="Выход пользователя",
     description="Выход текущего авторизованного пользователя",
     tags=["Пользователи"],
-    dependencies=[Depends(check_jwt)],
+    dependencies=[Depends(check_jwt)]
 )
 async def logout(
     request: Request, user_service: UserService = Depends(get_user_service)
@@ -171,16 +161,15 @@ async def logout(
     description="Запрос access токена",
     response_description="Access токен",
     tags=["Пользователи"],
-    dependencies=[Depends(check_jwt)],
+    dependencies=[Depends(check_jwt)]
 )
 async def refresh_token(
     request: Request, user_service: UserService = Depends(get_user_service)
 ) -> TokenSchema:
     tokens = get_tokens_from_cookie(request)
 
-    new_tokens = await user_service.refresh_access_token(
-        tokens.access_token, tokens.refresh_token
-    )
+    new_tokens = await user_service.refresh_access_token(tokens.access_token,
+                                                         tokens.refresh_token)
     response = Response()
     response.set_cookie("access_token", new_tokens.access_token)
     response.set_cookie("refresh_token", new_tokens.refresh_token)
@@ -196,7 +185,7 @@ async def refresh_token(
     description="Запрос истории авторизаций пользователя",
     response_description="Ид, ид пользователя, юзер агент, дата аутентификации",
     tags=["Пользователи"],
-    dependencies=[Depends(check_jwt)],
+    dependencies=[Depends(check_jwt)]
 )
 async def get_login_history(
     request: Request,
@@ -205,7 +194,9 @@ async def get_login_history(
 ) -> list[AuthenticationSchema]:
     tokens = get_tokens_from_cookie(request)
     auth_data = await auth_service.login_history(
-        tokens.access_token, pagination_params.page_size, pagination_params.page_number
+        tokens.access_token,
+        pagination_params.page_size,
+        pagination_params.page_number
     )
 
     list_auth_scheme = []
@@ -229,7 +220,7 @@ async def get_login_history(
     description="Проверка разрешения опредленных действий пользователя",
     response_description="Результат проверки: успешно или нет",
     tags=["Пользователи"],
-    dependencies=[Depends(check_jwt)],
+    dependencies=[Depends(check_jwt)]
 )
 async def check_permission(
     request: Request,
@@ -238,5 +229,6 @@ async def check_permission(
 ) -> bool:
     tokens = get_tokens_from_cookie(request)
     return await user_service.check_permissions(
-        tokens.access_token, permission_params.name
+        tokens.access_token,
+        permission_params.name
     )

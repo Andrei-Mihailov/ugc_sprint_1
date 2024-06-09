@@ -4,3 +4,4 @@ __pycache__
 .idea/misc.xml
 .idea/ugc_sprint_1.iml
 /.idea
+.env
