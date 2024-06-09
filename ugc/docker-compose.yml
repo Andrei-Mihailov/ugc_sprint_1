@@ -11,12 +11,7 @@ services:
     depends_on:
       - kafka
     ports:
-      - "127.0.0.1:5000:5000"
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:5000/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+      - "5000:5000"
   
   ugc-etl:
     build:
