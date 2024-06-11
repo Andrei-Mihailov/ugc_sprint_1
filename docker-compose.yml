@@ -44,8 +44,7 @@ services:
     build:
       context: .
       dockerfile: ./auth_service/auth.Dockerfile
-    # command: sh -c "alembic upgrade head && python3 src/main.py"
-    command: sh -c "python3 src/main.py"
+    command: sh -c "alembic upgrade head && python3 src/main.py"
     container_name: auth_service
     expose:
       - "8000"

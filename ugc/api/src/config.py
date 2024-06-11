@@ -2,7 +2,6 @@ import logging
 
 from pydantic import Field
 from pydantic_settings import BaseSettings
-from kafka3 import KafkaProducer
 
 
 class Settings(BaseSettings):
@@ -30,9 +29,3 @@ settings = Settings()
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
-
-# producer = KafkaProducer(
-#     bootstrap_servers=f"{settings.KAFKA_HOST}:{settings.KAFKA_PORT}"
-# )
-
-# logger.info("Продюсер Kafka успешно создан.")

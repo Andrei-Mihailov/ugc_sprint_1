@@ -1,13 +1,8 @@
-from flask import Flask, jsonify, request
+from flask import Flask
 from kafka3.admin import KafkaAdminClient, NewTopic
 from kafka3.errors import KafkaConnectionError
 from backoff import on_exception, expo
-from flask_jwt_extended import (
-    JWTManager,
-    create_access_token,
-    jwt_required,
-    get_jwt_identity,
-)
+from flask_jwt_extended import JWTManager
 
 from api.v1.kafka_producer import ugc_blueprint
 from config import settings
@@ -43,23 +38,6 @@ def init_app():
 @app.route("/")
 def index():
     return "App start"
-
-
-# @app.route("/login", methods=["POST"])
-# def login():
-#     username = request.json.get("username", None)
-#     password = request.json.get("password", None)
-#     # TODO admin admin не годится
-
-#     access_token = create_access_token(identity=username)
-#     return jsonify(access_token=access_token), 200
-
-
-# @app.route("/create_event", methods=["POST"])
-# @jwt_required()
-# def create_event():
-#     user_id = get_jwt_identity()
-#     return jsonify(message="Event created by user: " + user_id), 200
 
 
 if __name__ == "__main__":
