@@ -26,7 +26,7 @@ def generate_entries(start_index, end_index):
 def insert_entries(entries):
     with vertica_python.connect(**connection_info) as connection:
         cursor = connection.cursor()
-        insert_query = 'INSERT INTO user_progress (user_id, movie_id, progress, timestamp) VALUES (%s, %s, %s, %s)'
+        insert_query = 'INSERT INTO user_progress (user_id, movie_id, progress, timestamp) VALUES (?, ?, ?, ?)'
         cursor.executemany(insert_query, entries)
 
 user_id = 1
@@ -44,11 +44,10 @@ if __name__ == '__main__':
     start_time = time.time()
     with concurrent.futures.ProcessPoolExecutor() as executor:
         entries = list(tqdm(executor.map(generate_entries, [i*batch_size for i in range(batches)], [(i+1)*batch_size for i in range(batches)]), total=batches))
-    print("Rows/s during creation: {}".format(total_entries / (time.time() - start_time)))
+    print("Rows/s during creation: {:.2f}".format(total_entries / (time.time() - start_time)))
 
     print("Inserting entries")
     start_time = time.time()
     with concurrent.futures.ThreadPoolExecutor() as executor:
         list(tqdm(executor.map(insert_entries, entries), total=batches))
-    print("Rows/s during insertion: {}".format(total_entries / (time.time() - start_time)))
-
+    print("Rows/s during insertion: {:.2f}".format(total_entries / (time.time() - start_time)))

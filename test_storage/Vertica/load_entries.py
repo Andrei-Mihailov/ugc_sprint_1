@@ -1,7 +1,6 @@
 import datetime
 import concurrent.futures
 from tqdm import tqdm
-
 import vertica_python
 
 connection_info = {
@@ -25,7 +24,7 @@ def generate_entries(start_index, end_index):
 def insert_entries(entries):
     with vertica_python.connect(**connection_info) as connection:
         cursor = connection.cursor()
-        insert_query = 'INSERT INTO user_progress (user_id, movie_id, progress, timestamp) VALUES (%s, %s, %s, %s)'
+        insert_query = 'INSERT INTO user_progress (user_id, movie_id, progress, timestamp) VALUES (?, ?, ?, ?)'
         cursor.executemany(insert_query, entries)
 
 user_id = 1
@@ -45,7 +44,7 @@ if __name__ == '__main__':
         CREATE TABLE user_progress (
             id IDENTITY,
             user_id INTEGER NOT NULL,
-            movie_id VARCHAR(256) NOT NULL,
+            movie_id INTEGER NOT NULL,
             progress FLOAT NOT NULL,
             timestamp TIMESTAMP NOT NULL
         );
@@ -56,4 +55,3 @@ if __name__ == '__main__':
     print("Inserting entries")
     with concurrent.futures.ThreadPoolExecutor() as executor:
         list(tqdm(executor.map(insert_entries, entries), total=batches))
-
