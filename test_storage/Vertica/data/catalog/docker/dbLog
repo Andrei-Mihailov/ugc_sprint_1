@@ -1,0 +1,54 @@
+Connecting to spread at 4803
+/===========================================================================\
+| The Spread Toolkit.                                                       |
+| Copyright (c) 1993-2014 Spread Concepts LLC                               |
+| All rights reserved.                                                      |
+|                                                                           |
+| The Spread package is licensed under the Spread Basic IPv6 Support        |
+| for Vertica Test and Evaluation License                                   |
+| You may only use this software in compliance with the License.            |
+| A copy of the license is included in the source distribution.             |
+|                                                                           |
+| This product uses software developed by Spread Concepts LLC for use       |
+| in the Spread toolkit. For more information about Spread,                 |
+| see http://www.spread.org                                                 |
+|                                                                           |
+| This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF     |
+| ANY KIND, either express or implied.                                      |
+|                                                                           |
+| Creators:                                                                 |
+|    Yair Amir             yairamir@cs.jhu.edu                              |
+|    Michal Miskin-Amir    michal@spreadconcepts.com                        |
+|    Jonathan Stanton      jstanton@gwu.edu                                 |
+|    John Schultz          jschultz@spreadconcepts.com                      |
+|                                                                           |
+| Major Contributors:                                                       |
+|    Ryan Caudy           rcaudy@gmail.com - contribution to process groups.|
+|    Claudiu Danilov      claudiu@acm.org - scalable, wide-area support.    |
+|    Cristina Nita-Rotaru crisn@cs.purdue.edu - GC security.                |
+|    Theo Schlossnagle    jesus@omniti.com - Perl, autoconf, old skiplist.  |
+|    Dan Schoenblum       dansch@cnds.jhu.edu - Java interface.             |
+|                                                                           |
+| Special thanks to the following for discussions and ideas:                |
+|    Ken Birman, Danny Dolev, Jacob Green, Mike Goodrich, Ben Laurie,       |
+|    David Shaw, Gene Tsudik, Robbert VanRenesse.                           |
+|                                                                           |
+| Partial funding provided by the Defense Advanced Research Project Agency  |
+| (DARPA) and the National Security Agency (NSA) 2000-2004. The Spread      |
+| toolkit is not necessarily endorsed by DARPA or the NSA.                  |
+|                                                                           |
+| For a full list of contributors, see Readme.txt in the distribution.      |
+|                                                                           |
+| WWW:     www.spread.org     www.spreadconcepts.com                        |
+| Contact: info@spreadconcepts.com                                          |
+|                                                                           |
+| Version 4.02.00 Vertica IPv6-3 Built 19/Jan/2015                          |
+\===========================================================================/
+Conf_load_conf_file: using file: /home/dbadmin/docker/catalog/docker/v_docker_node0001_catalog/spread.conf
+Setting active IP version to 0
+Successfully configured Segment 0 [127.255.255.255]:4803 with 1 procs:
+	       N127000000001: 127.0.0.1
+Connected to spread on local domain socket /opt/vertica/spread/tmp/4803
+auto restart closing socket
+Starting UDxSideProcess for language C++
+   with command line:  /opt/vertica/bin/vertica-udx-C++ 4 v_docker_node0001-239:0x13 debug-log-off /home/dbadmin/docker/catalog/docker/v_docker_node0001_catalog/UDxLogs 5

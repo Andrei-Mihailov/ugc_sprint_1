@@ -1,0 +1,42 @@
+# Results
+
+## Без фоновой загрузки
+
+### ClickHouse
+
+| Operation                  | Velocity (rows/s) | Total Time (s) |
+|----------------------------|------------------:|---------------:|
+| Loading 10,000,000 entries |          				 |         196.00 |
+| Write Operations           |                   |        			  |
+| 100,000 rows               |         79,632.40 |        			  |
+| Read Operations            |                   |                |
+| SELECT * FROM user_progress |       487,002.19 |          20.82 |
+| SELECT + WHERE             |      2,535,530.23 |           4.03 |
+
+### Vertica
+
+| Operation                  | Velocity (rows/s) | Total Time (s) |
+|----------------------------|------------------:|---------------:|
+| Loading 10,000,000 entries |          				 |          71.00 |
+| Write Operations           |                   |        			  |
+| 100,000 rows               |        124,857.40 |        			  |
+| Read Operations            |                   |                |
+| SELECT * FROM user_progress |        93,723.23 |         108.26 |
+| SELECT + WHERE             |         42,758.26 |         235.20 |
+
+
+## С фоновой загрузкой
+
+### ClickHouse
+
+| Operation                  | Velocity (rows/s) | Total Time (s) |
+|----------------------------|------------------:|---------------:|
+| Write Operations           |          15,137.71 |        			  |
+| Read Operations            |       2,421,954.56 |               |
+
+### Vertica
+
+| Operation                  | Velocity (rows/s) | Total Time (s) |
+|----------------------------|------------------:|---------------:|
+| Write Operations           |           6,731.90 |        			  |
+| Read Operations            |           9,327.23 |               |
