@@ -15,7 +15,7 @@ connection_info = {
 }
 
 def insert_data(total_rows):
-    insert_query = 'INSERT INTO user_progress (user_id, movie_id, progress, timestamp) VALUES (%s, %s, %s, %s)'
+    insert_query = 'INSERT INTO user_progress (user_id, movie_id, progress, timestamp) VALUES (?, ?, ?, ?)'
     with vertica_python.connect(**connection_info) as connection:
         cursor = connection.cursor()
         data = [(random.randint(1, 100), random.randint(1, 100), random.random(), datetime.datetime.now()) for _ in range(total_rows)]
@@ -27,7 +27,7 @@ def background_load(total_rows, interval, event):
         time.sleep(interval)
 
 def read_data_batch(batch_size):
-    select_query = 'SELECT user_id, movie_id, progress FROM user_progress WHERE user_id = 1 LIMIT %s'
+    select_query = 'SELECT user_id, movie_id, progress FROM user_progress WHERE user_id = 1 LIMIT ?'
     with vertica_python.connect(**connection_info) as connection:
         cursor = connection.cursor()
         cursor.execute(select_query, (batch_size,))
@@ -75,4 +75,3 @@ if __name__ == '__main__':
     print(f'Read Velocity: {read_velocity:.2f} rows/s')
     print(f'Total Rows Read: {total_rows_read}')
     print(f'Total Time: {end_time - start_time:.2f} s')
-

@@ -14,14 +14,14 @@ connection_info = {
 }
 
 def insert_data(total_rows):
-    insert_query = 'INSERT INTO user_progress (user_id, movie_id, progress, timestamp) VALUES (%s, %s, %s, %s)'
+    insert_query = 'INSERT INTO user_progress (user_id, movie_id, progress, timestamp) VALUES (?, ?, ?, ?)'
     with vertica_python.connect(**connection_info) as connection:
         cursor = connection.cursor()
         data = [(random.randint(1, 100), random.randint(1, 100), random.random(), datetime.datetime.now()) for _ in tqdm(range(total_rows), desc='Inserting', unit='row')]
         cursor.executemany(insert_query, data)
 
 def read_data(batch_size):
-    select_query = 'SELECT * FROM user_progress LIMIT %s OFFSET %s'
+    select_query = 'SELECT * FROM user_progress LIMIT ? OFFSET ?'
     with vertica_python.connect(**connection_info) as connection:
         cursor = connection.cursor()
         offset = 0
@@ -35,7 +35,6 @@ def read_data(batch_size):
 
 batch_size = 100000
 start_time = time.time()
-read_velocity = 0
 total_rows = 0
 with tqdm(desc='Reading', unit='batch') as pbar:
     for result in read_data(batch_size):
@@ -46,4 +45,3 @@ with tqdm(desc='Reading', unit='batch') as pbar:
 
 print(f'Total rows fetched: {total_rows}')
 print(f'Total time: {(time.time() - start_time):.2f} s')
-
