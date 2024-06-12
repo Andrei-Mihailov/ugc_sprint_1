@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 class Clickhouse:
     def __init__(self) -> None:
-        self.clickhouse_connect: Union[Client, None]
+        self.clickhouse_connect: Union[Client, None] = None
 
     @on_exception(expo, (ConnectionError), max_tries=5)
     def execute_query(self, query: str, data: Union[Any, None]):
@@ -49,7 +49,7 @@ class Clickhouse:
 
 class Kafka:
     def __init__(self) -> None:
-        self.kafka_connect: Union[KafkaConsumer, None]
+        self.kafka_connect: Union[KafkaConsumer, None] = None
 
  
 ch = Clickhouse()
