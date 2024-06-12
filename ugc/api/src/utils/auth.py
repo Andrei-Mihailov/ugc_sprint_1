@@ -63,7 +63,13 @@ class JWTBearer:
             return {}
 
     @staticmethod
-    async def check(query: str, params: dict = {}, headers: dict = {}, json: dict = {}):
+    async def check(query: str, params: dict = None, headers: dict = None, json: dict = None):
+        if params is None:
+            params = {}
+        if headers is None:
+            headers = {}
+        if json is None:
+            json = {}
         async with aiohttp.ClientSession(headers=headers) as client:
             response = await client.get(query, json=json, params=params)
             return response

@@ -35,16 +35,19 @@ settings = Settings()
 logger = logging.getLogger(__name__)
 
 
-class Clickhouse():
+class Clickhouse:
     def __init__(self) -> None:
         self.clickhouse_connect: Union[Client, None]
 
     @on_exception(expo, (ConnectionError), max_tries=5)
     def execute_query(self, query: str, data: Union[Any, None]):
-        self.clickhouse_connect.execute(query, data)
+        if self.clickhouse_connect is not None:
+            self.clickhouse_connect.execute(query, data)
+        else:
+            raise ConnectionError("Clickhouse client is not connected")
 
 
-class Kafka():
+class Kafka:
     def __init__(self) -> None:
         self.kafka_connect: Union[KafkaConsumer, None]
 
